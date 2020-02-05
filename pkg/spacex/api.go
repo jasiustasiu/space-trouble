@@ -29,8 +29,8 @@ type API struct {
 	baseURL string
 }
 
-func (a *API) ListUpcomingLaunches() ([]Launch, error) {
-	response, err := a.client.Get(fmt.Sprintf("%v%v", a.baseURL, upcomingLaunchesUri))
+func (a *API) ListUpcomingLaunches(siteID string) ([]Launch, error) {
+	response, err := a.client.Get(fmt.Sprintf("%v%v?site_id=%v", a.baseURL, upcomingLaunchesUri, siteID))
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +48,8 @@ func (a *API) ListUpcomingLaunches() ([]Launch, error) {
 	return launches, err
 }
 
-func (a *API) GetLaunchPad(siteId string) (*LaunchPad, error) {
-	response, err := a.client.Get(fmt.Sprintf("%v%v/%v", a.baseURL, launchpadsUri, siteId))
+func (a *API) GetLaunchPad(siteID string) (*LaunchPad, error) {
+	response, err := a.client.Get(fmt.Sprintf("%v%v/%v", a.baseURL, launchpadsUri, siteID))
 	if err != nil {
 		return nil, err
 	}

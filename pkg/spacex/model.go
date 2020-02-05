@@ -1,7 +1,9 @@
 package spacex
 
-type Launch struct {
+import "time"
 
+type Launch struct {
+	LaunchDateLocal time.Time `json:"launch_date_local"`
 }
 
 type LaunchPad struct {
