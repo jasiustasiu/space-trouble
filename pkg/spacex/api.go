@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	launchesUri = "/v3/launches"
+	upcomingLaunchesUri = "/v3/launches/upcoming"
+	launchpadsUri = "/v3/launchpads"
 )
 
 func NewAPI(baseURL string) *API {
@@ -28,8 +29,8 @@ type API struct {
 	baseURL string
 }
 
-func (a *API) ListLaunches() ([]Launch, error) {
-	response, err := a.client.Get(fmt.Sprintf("%v%v", a.baseURL, launchesUri))
+func (a *API) ListUpcomingLaunches() ([]Launch, error) {
+	response, err := a.client.Get(fmt.Sprintf("%v%v", a.baseURL, upcomingLaunchesUri))
 	if err != nil {
 		return nil, err
 	}
@@ -45,5 +46,23 @@ func (a *API) ListLaunches() ([]Launch, error) {
 	var launches []Launch
 	err = json.Unmarshal(output, &launches)
 	return launches, err
+}
 
+func (a *API) GetLaunchPad(siteId string) (*LaunchPad, error) {
+	response, err := a.client.Get(fmt.Sprintf("%v%v/%v", a.baseURL, launchpadsUri, siteId))
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	output, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != 200 {
+		log.Printf(fmt.Sprintf("Could not get launch pad. Reason: %v", string(output)))
+		return nil, httpError.NewHTTPError(response.StatusCode, "Could not get launch pad")
+	}
+	var launches LaunchPad
+	err = json.Unmarshal(output, &launches)
+	return &launches, err
 }
