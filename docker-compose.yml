@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  spacetrouble:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - 8080:8080
+    restart: on-failure
+    depends_on:
+      - postgresql
+  postgresql:
+    image: postgres:12-alpine
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ./scripts/db:/docker-entrypoint-initdb.d/
