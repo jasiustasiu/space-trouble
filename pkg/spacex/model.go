@@ -7,5 +7,5 @@ type Launch struct {
 }
 
 type LaunchPad struct {
-
+	Status string `json:"status"`
 }
