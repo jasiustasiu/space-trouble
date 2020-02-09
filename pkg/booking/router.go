@@ -8,7 +8,7 @@ import (
 
 func NewRouter(service Service) *Router {
 	return &Router{
-		service:service,
+		service: service,
 	}
 }
 
@@ -35,19 +35,14 @@ func (r *Router) CreateBookingRoute(c *gin.Context) {
 }
 
 func (r *Router) GetBookingsRoute(c *gin.Context) {
-	var booking Booking
-	if err := c.BindJSON(&booking); err == nil {
-		err = r.service.CreateBooking(booking)
-		if err != nil {
-			if httpErr, ok := err.(*httpError.HTTPError); ok {
-				c.JSON(httpErr.Status, gin.H{"error": httpErr.Details})
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			}
+	bookings, err := r.service.GetBookings()
+	if err != nil {
+		if httpErr, ok := err.(*httpError.HTTPError); ok {
+			c.JSON(httpErr.Status, gin.H{"error": httpErr.Details})
 		} else {
-			c.JSON(http.StatusOK, gin.H{"message": "Booking confirmed"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		}
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, bookings)
 	}
 }
