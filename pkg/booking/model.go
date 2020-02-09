@@ -3,13 +3,14 @@ package booking
 import "space-trouble/internal/date"
 
 type Booking struct {
-	FirstName     string      `json:"firstName"`
-	LastName      string      `json:"lastName"`
-	Gender        Gender      `json:"gender"`
-	Birthday      date.Date   `json:"birthday"`
-	LaunchpadID   string      `json:"launchpadId"`
-	DestinationID Destination `json:"destinationId"`
-	LaunchDate    date.Date   `json:"launchDate"`
+	ID            *int64      `json:"-" db:"id"`
+	FirstName     string      `json:"firstName" db:"first_name"`
+	LastName      string      `json:"lastName" db:"last_name"`
+	Gender        Gender      `json:"gender" db:"gender"`
+	Birthday      date.Date   `json:"birthday" db:"birthday"`
+	LaunchpadID   string      `json:"launchpadId" db:"launchpad_id"`
+	DestinationID Destination `json:"destinationId" db:"destination_id"`
+	LaunchDate    date.Date   `json:"launchDate" db:"launch_date"`
 }
 
 type Gender string
@@ -30,3 +31,8 @@ const (
 	Titan                    = "titan"
 	Ganymede                 = "ganymede"
 )
+
+type AvailabilityResponse struct {
+	Available bool
+	Err       error
+}

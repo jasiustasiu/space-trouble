@@ -10,7 +10,7 @@ const noRowsError = "sql: no rows in result set"
 type Repository interface {
 	Save(booking Booking) error
 	GetAll() ([]Booking, error)
-	IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error)
+	IsLaunchpadAvailable(launchpadID string, launchDate date.Date, out chan<- AvailabilityResponse)
 }
 
 func NewRepository(db *sqlx.DB) Repository {
@@ -46,15 +46,17 @@ func (r *repository) GetAll() (all []Booking, err error) {
 	return all, nil
 }
 
-func (r *repository) IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error) {
+func (r *repository) IsLaunchpadAvailable(launchpadID string, launchDate date.Date, out chan<- AvailabilityResponse) {
 	row := r.db.QueryRowx("select id from bookings where launchpad_id = $1 and launch_date = $2", launchpadID, launchDate.Format(date.Format))
 	var id int64
 	err := row.Scan(&id)
 	if err != nil {
 		if err.Error() == noRowsError {
-			return true, nil
+			out <- AvailabilityResponse{Available: true, Err: nil,}
+		} else {
+			out <- AvailabilityResponse{Available: false, Err: err,}
 		}
-		return false, err
+	} else {
+		out <- AvailabilityResponse{Available: false, Err: nil,}
 	}
-	return false, nil
 }

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"space-trouble/internal/date"
 	"space-trouble/internal/httpError"
-	"space-trouble/pkg/spacex"
 	"time"
 )
 
@@ -20,24 +19,24 @@ var weekdaysToDestinations = map[time.Weekday]Destination{
 }
 
 type AvailabilityService interface {
-	IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error)
+	IsLaunchpadAvailable(launchpadID string, launchDate date.Date, out chan<- AvailabilityResponse)
 }
 
 type Service interface {
 	CreateBooking(booking Booking) error
- 	GetBookings() ([]Booking, error)
+	GetBookings() ([]Booking, error)
 }
 
-func NewBookingService(repository Repository, spacexService spacex.Service) Service {
+func NewBookingService(repository Repository, availabilityService ...AvailabilityService) Service {
 	return &service{
-		repository: repository,
-		spacexService:  spacexService,
+		repository:           repository,
+		availabilityServices: availabilityService,
 	}
 }
 
 type service struct {
-	repository Repository
-	spacexService  spacex.Service
+	repository           Repository
+	availabilityServices []AvailabilityService
 }
 
 func (s *service) CreateBooking(booking Booking) error {
@@ -45,22 +44,24 @@ func (s *service) CreateBooking(booking Booking) error {
 	if booking.DestinationID != todayDestination {
 		return httpError.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("We departure to %v only for given day", todayDestination))
 	}
-	//TODO change to channels, refactor a bit
-	available1, err := s.spacexService.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
-	if err != nil {
-		return err
+	out := make(chan AvailabilityResponse, len(s.availabilityServices))
+	for _, availabilityService := range s.availabilityServices {
+		go availabilityService.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate, out)
+
 	}
-	available2, err := s.repository.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
-	if err != nil {
-		return err
+	for range s.availabilityServices {
+		response := <-out
+		if response.Err != nil {
+			return response.Err
+		}
+		if !response.Available {
+			return httpError.NewHTTPError(http.StatusConflict, "There is already a flight booked for given day")
+		}
 	}
-	if available1 == false || available2 == false {
-		return httpError.NewHTTPError(http.StatusConflict, "There is already a flight booked for given day")
-	}
+	close(out)
 	return s.repository.Save(booking)
 }
 
 func (s *service) GetBookings() ([]Booking, error) {
 	return s.repository.GetAll()
 }
-

@@ -1,7 +1,7 @@
 package date
 
 import (
-	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -23,7 +23,7 @@ func (d *Date) UnmarshalJSON(b []byte) error {
 }
 
 func (d *Date) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d)
+	return []byte(fmt.Sprintf("\"%v\"", d.Format(Format))), nil
 }
 
 func (d Date) Format(s string) string {

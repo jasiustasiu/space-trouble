@@ -38,7 +38,8 @@ func main() {
 	spacexAPI := spacex.NewAPI(spacexBaseURL)
 	spacexService := spacex.NewService(spacexAPI)
 	bookingRepository := booking.NewRepository(db)
-	bookingService := booking.NewBookingService(bookingRepository, spacexService)
+	//it's overengineering in this case, just to present possible solution
+	bookingService := booking.NewBookingService(bookingRepository, spacexService, bookingRepository)
 	router := booking.NewRouter(bookingService)
 
 	r := gin.Default()
