@@ -6,14 +6,14 @@ import (
 	"space-trouble/internal/httpError"
 )
 
-func NewRouter(service *Service) *Router {
+func NewRouter(service Service) *Router {
 	return &Router{
 		service:service,
 	}
 }
 
 type Router struct {
-	service *Service
+	service Service
 }
 
 func (r *Router) CreateBookingRoute(c *gin.Context) {

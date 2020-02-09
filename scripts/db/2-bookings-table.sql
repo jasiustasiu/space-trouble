@@ -15,3 +15,5 @@ create table bookings
 create unique index bookings_launchpad_id_uindex
     on bookings (launchpad_id, launch_date);
 
+GRANT ALL PRIVILEGES ON TABLE bookings TO space_trouble_user;
+GRANT ALL PRIVILEGES ON SEQUENCE bookings_id_seq TO space_trouble_user;

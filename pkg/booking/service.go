@@ -47,18 +47,20 @@ func (s *service) CreateBooking(booking Booking) error {
 	}
 	//TODO change to channels, refactor a bit
 	available1, err := s.spacexService.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
-	available2, err := s.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
+	if err != nil {
+		return err
+	}
+	available2, err := s.repository.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
+	if err != nil {
+		return err
+	}
 	if available1 == false || available2 == false {
 		return httpError.NewHTTPError(http.StatusConflict, "There is already a flight booked for given day")
 	}
-	return err
+	return s.repository.Save(booking)
 }
 
 func (s *service) GetBookings() ([]Booking, error) {
 	return s.repository.GetAll()
 }
 
-func (s *service) IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error) {
-	_, ok := s.repository.Get(launchpadID, launchDate)
-	return ok, nil
-}

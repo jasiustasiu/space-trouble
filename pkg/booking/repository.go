@@ -5,10 +5,12 @@ import (
 	"space-trouble/internal/date"
 )
 
+const noRowsError = "sql: no rows in result set"
+
 type Repository interface {
 	Save(booking Booking) error
 	GetAll() ([]Booking, error)
-	Get(launchpadID string, launchDate date.Date) (b Booking, ok bool)
+	IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error)
 }
 
 func NewRepository(db *sqlx.DB) Repository {
@@ -22,8 +24,8 @@ type repository struct {
 }
 
 func (r *repository) Save(b Booking) error {
-	_, err :=  r.db.Exec("insert into bookings(first_name, last_name, gender, birthday, launchpad_id, destination_id, launch_date) " +
-		"values (?, ?, ?, ?, ?, ?, ?)", b.FirstName, b.LastName, b.Gender, b.Birthday.Format(date.Format), b.LaunchpadID, b.DestinationID, b.LaunchDate.Format(date.Format))
+	_, err := r.db.Exec("insert into bookings(first_name, last_name, gender, birthday, launchpad_id, destination_id, launch_date) "+
+		"values ($1, $2, $3, $4, $5, $6, $7)", b.FirstName, b.LastName, b.Gender, b.Birthday.Format(date.Format), b.LaunchpadID, b.DestinationID, b.LaunchDate.Format(date.Format))
 	return err
 }
 
@@ -44,16 +46,15 @@ func (r *repository) GetAll() (all []Booking, err error) {
 	return all, nil
 }
 
-func (r *repository) Get(launchpadID string, launchDate date.Date) (b Booking, ok bool) {
-	rows, err := r.db.Queryx("select * from bookings where launchpad_id = ? and launch_date = ?", launchpadID, launchDate.Format(date.Format))
+func (r *repository) IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error) {
+	row := r.db.QueryRowx("select id from bookings where launchpad_id = $1 and launch_date = $2", launchpadID, launchDate.Format(date.Format))
+	var id int64
+	err := row.Scan(&id)
 	if err != nil {
-		return b, false
+		if err.Error() == noRowsError {
+			return true, nil
+		}
+		return false, err
 	}
-	defer rows.Close()
-	ok = rows.Next()
-	err = rows.StructScan(&b)
-	if err != nil {
-		return b, false
-	}
-	return b, ok
+	return false, nil
 }
