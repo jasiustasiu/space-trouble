@@ -2,6 +2,8 @@ package booking
 
 import (
 	"fmt"
+	"net/http"
+	"space-trouble/internal/date"
 	"space-trouble/internal/httpError"
 	"space-trouble/pkg/spacex"
 	"time"
@@ -17,44 +19,46 @@ var weekdaysToDestinations = map[time.Weekday]Destination{
 	time.Saturday:  Ganymede,
 }
 
-func NewBookingService(repository Repository, spacexAPI *spacex.API) *Service {
-	return &Service{
+type AvailabilityService interface {
+	IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error)
+}
+
+type Service interface {
+	CreateBooking(booking Booking) error
+ 	GetBookings() ([]Booking, error)
+}
+
+func NewBookingService(repository Repository, spacexService spacex.Service) Service {
+	return &service{
 		repository: repository,
-		spacexAPI:  spacexAPI,
+		spacexService:  spacexService,
 	}
 }
 
-type Service struct {
+type service struct {
 	repository Repository
-	spacexAPI  *spacex.API
+	spacexService  spacex.Service
 }
 
-func (s *Service) CreateBooking(booking Booking) error {
+func (s *service) CreateBooking(booking Booking) error {
 	todayDestination := weekdaysToDestinations[booking.LaunchDate.Weekday()]
 	if booking.DestinationID != todayDestination {
-		return httpError.NewHTTPError(400, fmt.Sprintf("We departure to %v only for given day", todayDestination))
+		return httpError.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("We departure to %v only for given day", todayDestination))
 	}
-	launchpad, err := s.spacexAPI.GetLaunchPad(booking.LaunchpadID)
-	if err != nil {
-		return httpError.NewHTTPError(400, fmt.Sprintf("Launch pad with id %v does not exist", booking.LaunchpadID))
+	//TODO change to channels, refactor a bit
+	available1, err := s.spacexService.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
+	available2, err := s.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate)
+	if available1 == false || available2 == false {
+		return httpError.NewHTTPError(http.StatusConflict, "There is already a flight booked for given day")
 	}
-	if launchpad.Status != "active" {
-		return httpError.NewHTTPError(400, fmt.Sprintf("Launch pad with id %v is not active", booking.LaunchpadID))
-	}
-
-	launches, err := s.spacexAPI.ListUpcomingLaunches(booking.LaunchpadID)
-	if err != nil {
-		return err
-	}
-	launchDateStr := booking.LaunchDate.Format(dateFormat)
-	for _, launch := range launches {
-		if launch.LaunchDateLocal.Format(dateFormat) == launchDateStr {
-			return httpError.NewHTTPError(400, "Given launch pad is already booked for selected day")
-		}
-	}
-	return nil
+	return err
 }
 
-func (s *Service) GetBookings() ([]Booking, error) {
+func (s *service) GetBookings() ([]Booking, error) {
 	return s.repository.GetAll()
+}
+
+func (s *service) IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error) {
+	_, ok := s.repository.Get(launchpadID, launchDate)
+	return ok, nil
 }
