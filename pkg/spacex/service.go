@@ -2,6 +2,7 @@ package spacex
 
 import (
 	"fmt"
+	"net/http"
 	"space-trouble/internal/date"
 	"space-trouble/internal/httpError"
 )
@@ -23,10 +24,10 @@ type service struct {
 func (s *service) IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error) {
 	launchpad, err := s.api.GetLaunchPad(launchpadID)
 	if err != nil {
-		return false, httpError.NewHTTPError(400, fmt.Sprintf("Launch pad with id %v does not exist", launchpadID))
+		return false, httpError.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Launchpad with id %v does not exist", launchpadID))
 	}
 	if launchpad.Status != "active" {
-		return false, httpError.NewHTTPError(400, fmt.Sprintf("Launch pad with id %v is not active", launchpadID))
+		return false, httpError.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Launchpad with id %v is not active", launchpadID))
 	}
 
 	launches, err := s.api.ListUpcomingLaunches(launchpadID)
@@ -36,7 +37,7 @@ func (s *service) IsLaunchpadAvailable(launchpadID string, launchDate date.Date)
 	launchDateStr := launchDate.Format(date.Format)
 	for _, launch := range launches {
 		if launch.LaunchDateLocal.Format(date.Format) == launchDateStr {
-			return false, httpError.NewHTTPError(400, "Given launch pad is already booked for selected day")
+			return false, httpError.NewHTTPError(http.StatusBadRequest, "Given launchpad is already booked for selected day")
 		}
 	}
 	return true, nil
