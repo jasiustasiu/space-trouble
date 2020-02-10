@@ -19,7 +19,7 @@ var weekdaysToDestinations = map[time.Weekday]Destination{
 }
 
 type AvailabilityService interface {
-	IsLaunchpadAvailable(launchpadID string, launchDate date.Date, out chan<- AvailabilityResponse)
+	IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error)
 }
 
 type Service interface {
@@ -46,8 +46,7 @@ func (s *service) CreateBooking(booking Booking) error {
 	}
 	out := make(chan AvailabilityResponse, len(s.availabilityServices))
 	for _, availabilityService := range s.availabilityServices {
-		go availabilityService.IsLaunchpadAvailable(booking.LaunchpadID, booking.LaunchDate, out)
-
+		go isLaunchpadAvailable(availabilityService, booking.LaunchpadID, booking.LaunchDate, out)
 	}
 	for range s.availabilityServices {
 		response := <-out
@@ -60,6 +59,11 @@ func (s *service) CreateBooking(booking Booking) error {
 	}
 	close(out)
 	return s.repository.Save(booking)
+}
+
+func isLaunchpadAvailable(svc AvailabilityService, launchpadID string, launchDate date.Date, out chan<- AvailabilityResponse) {
+	available, err := svc.IsLaunchpadAvailable(launchpadID, launchDate)
+	out <- AvailabilityResponse{Available: available, Err: err,}
 }
 
 func (s *service) GetBookings() ([]Booking, error) {
