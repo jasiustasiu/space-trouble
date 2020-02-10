@@ -19,8 +19,8 @@ services:
       retries: 10
     restart: always
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=space_trouble_user
+      - POSTGRES_PASSWORD=tabeo123
     volumes:
       - ./scripts/db:/docker-entrypoint-initdb.d/
     ports:
