@@ -12,7 +12,7 @@ import (
 
 const (
 	spacexBaseURL = "https://api.spacexdata.com"
-	bookingURL = "/v1/bookings"
+	bookingURL    = "/v1/bookings"
 )
 
 const (
