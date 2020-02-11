@@ -25,6 +25,7 @@ type AvailabilityService interface {
 type Service interface {
 	CreateBooking(booking Booking) error
 	GetBookings() ([]Booking, error)
+	DeleteBooking(id int64) error
 }
 
 func NewBookingService(repository Repository, availabilityService ...AvailabilityService) Service {
@@ -68,4 +69,8 @@ func isLaunchpadAvailable(svc AvailabilityService, launchpadID string, launchDat
 
 func (s *service) GetBookings() ([]Booking, error) {
 	return s.repository.GetAll()
+}
+
+func (s *service) DeleteBooking(id int64) error {
+	return s.repository.Delete(id)
 }

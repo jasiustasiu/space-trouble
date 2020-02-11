@@ -10,6 +10,7 @@ const noRowsError = "sql: no rows in result set"
 type Repository interface {
 	Save(booking Booking) error
 	GetAll() ([]Booking, error)
+	Delete(id int64) error
 	IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error)
 }
 
@@ -44,6 +45,12 @@ func (r *repository) GetAll() (all []Booking, err error) {
 		all = append(all, booking)
 	}
 	return all, nil
+}
+
+func (r *repository) Delete(id int64) error {
+	_, err := r.db.Exec("delete from bookings where id = $1", id)
+	return err
+
 }
 
 func (r *repository) IsLaunchpadAvailable(launchpadID string, launchDate date.Date) (bool, error) {

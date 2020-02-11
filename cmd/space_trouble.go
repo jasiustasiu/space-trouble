@@ -16,7 +16,7 @@ const (
 )
 
 const (
-	host     = "localhost"
+	host     = "postgresql"
 	port     = 5432
 	user     = "space_trouble_user"
 	password = "tabeo123"
@@ -34,7 +34,6 @@ func main() {
 		log.Fatalln(err)
 	}
 
-
 	spacexAPI := spacex.NewAPI(spacexBaseURL)
 	spacexService := spacex.NewService(spacexAPI)
 	bookingRepository := booking.NewRepository(db)
@@ -45,5 +44,6 @@ func main() {
 	r := gin.Default()
 	r.POST(bookingURL, router.CreateBookingRoute)
 	r.GET(bookingURL, router.GetBookingsRoute)
+	r.DELETE(bookingURL+"/:id", router.DeleteBookingRoute)
 	r.Run()
 }

@@ -3,7 +3,7 @@ package booking
 import "space-trouble/internal/date"
 
 type Booking struct {
-	ID            *int64      `json:"-" db:"id"`
+	ID            *int64      `json:"id" db:"id"`
 	FirstName     string      `json:"firstName" db:"first_name"`
 	LastName      string      `json:"lastName" db:"last_name"`
 	Gender        Gender      `json:"gender" db:"gender"`

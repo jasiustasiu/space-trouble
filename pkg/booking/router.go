@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"space-trouble/internal/httpError"
+	"strconv"
 )
 
 func NewRouter(service Service) *Router {
@@ -44,5 +45,18 @@ func (r *Router) GetBookingsRoute(c *gin.Context) {
 		}
 	} else {
 		c.JSON(http.StatusOK, bookings)
+	}
+}
+
+func (r *Router) DeleteBookingRoute(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	err = r.service.DeleteBooking(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
 	}
 }

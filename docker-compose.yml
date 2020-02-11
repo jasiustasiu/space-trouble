@@ -1,7 +1,9 @@
 version: '3'
 
 services:
+
   spacetrouble:
+    command: go run cmd/space_trouble.go
     build: .
     volumes:
       - .:/app
@@ -10,10 +12,11 @@ services:
     restart: on-failure
     depends_on:
       - postgresql
+
   postgresql:
     image: postgres:12-alpine
     healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
+      test: [ "CMD-SHELL", "pg_isready -U space_trouble_user -d space_trouble" ]
       timeout: 45s
       interval: 10s
       retries: 10
@@ -21,6 +24,7 @@ services:
     environment:
       - POSTGRES_USER=space_trouble_user
       - POSTGRES_PASSWORD=tabeo123
+      - POSTGRESS_DB=space_trouble
     volumes:
       - ./scripts/db:/docker-entrypoint-initdb.d/
     ports:
